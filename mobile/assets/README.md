@@ -1,37 +1,67 @@
-# Assets
+# Assets Folder
 
-## Required Assets
+This folder contains the app icons, splash screens, and other static assets.
 
-Place the following assets in this directory:
+## Required Files
 
-1. **icon-school-ai-bus.png** (1024x1024)
-   - App icon
-   - Image generation prompt: "A modern, minimalist school bus icon with a tracking GPS symbol, orange-red (#FF5A3C) and dark blue (#002133) color scheme, clean vector style, suitable for mobile app icon"
+### 1. icon.png
+- **Size**: 1024x1024 pixels
+- **Format**: PNG
+- **Purpose**: Main app icon (iOS and Android)
+- **Background**: Should match your brand (recommended: #1A3B6A)
+- **Content**: Meetrix logo (hands shaking with person icon)
 
-2. **splash.png** (1242x2436 for iOS, 1080x1920 for Android)
-   - Splash screen
-   - Background color: #002133
-   - Can be same as icon or a branded splash screen
+### 2. adaptive-icon.png
+- **Size**: 1024x1024 pixels
+- **Format**: PNG
+- **Purpose**: Android adaptive icon
+- **Background**: #1A3B6A (deep blue)
+- **Content**: Meetrix logo (hands shaking with person icon)
 
-3. **adaptive-icon.png** (1024x1024)
-   - Android adaptive icon foreground
-   - Background color: #002133
+### 3. splash.png
+- **Size**: 1284x2778 pixels (or any size with 9:16 aspect ratio)
+- **Format**: PNG
+- **Purpose**: App splash screen
+- **Background**: #1A3B6A (deep blue)
+- **Content**: Meetrix logo centered
 
-4. **favicon.png** (48x48)
-   - Web favicon
+### 4. favicon.png
+- **Size**: 48x48 pixels
+- **Format**: PNG
+- **Purpose**: Web favicon
+- **Background**: Transparent or #1A3B6A
+- **Content**: Meetrix logo (simplified version)
 
-5. **notification-icon.png** (96x96)
-   - Notification icon (white on transparent)
+## Creating Icons from Your Logo
 
-6. **notification-sound.wav** (optional)
-   - Custom notification sound
+### Option 1: Online Tools
+1. Use [Expo Icon Generator](https://www.appicon.co/)
+2. Upload your logo
+3. Download all sizes
+4. Place them in this folder
 
-## Quick Placeholder Generation
+### Option 2: Manual Creation
+1. Start with a 1024x1024px canvas
+2. Background: #1A3B6A (deep blue)
+3. Add your Meetrix logo (hands shaking with person icon)
+4. Center the logo with appropriate padding
+5. Export as PNG
 
-You can use online tools like:
-- [Canva](https://www.canva.com) - Free design tool
-- [Figma](https://www.figma.com) - Professional design
-- [IconGenerator](https://www.appicon.co) - App icon generator
+### Option 3: Using ImageMagick (Command Line)
+```bash
+# Convert and resize your logo
+convert logo.png -resize 1024x1024 -background "#1A3B6A" -gravity center -extent 1024x1024 assets/icon.png
+```
 
-Or use AI image generation with the prompt above.
+## Logo Description
+
+Your Meetrix logo features:
+- **Main Element**: Two hands shaking, forming an inverted heart shape
+- **Top Element**: A person icon (circle for head, curved line for shoulders, small circle on top)
+- **Text**: "Meetrix" in elegant cursive/connected script
+- **Color**: Deep blue (#1A3B6A)
+
+## Temporary Placeholder
+
+Until you add your logo files, the app will use default Expo icons. The app will still function, but you should replace these with your brand assets before production release.
 

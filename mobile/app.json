@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "BusTrackr",
+    "slug": "bustrackr",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon-school-ai-bus.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#002133"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bustrackr.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "BusTrackr needs your location to show nearby buses.",
+        "NSLocationAlwaysUsageDescription": "BusTrackr needs your location for real-time tracking."
+      },
+      "config": {
+        "googleMapsApiKey": ""
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#002133"
+      },
+      "package": "com.bustrackr.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "BusTrackr needs your location to show nearby buses."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#FF5A3C"
+        }
+      ]
+    ]
+  }
+}

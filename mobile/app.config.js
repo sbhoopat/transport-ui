@@ -31,7 +31,7 @@ export default {
           'BusTrackr needs your location for real-time tracking.',
       },
       config: {
-        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'PLACEHOLDER_API_KEY_REPLACE_LATER',
       },
     },
     android: {
@@ -43,7 +43,7 @@ export default {
       permissions: ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION'],
       config: {
         googleMaps: {
-          apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+          apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'PLACEHOLDER_API_KEY_REPLACE_LATER',
         },
       },
     },
@@ -61,7 +61,6 @@ export default {
       [
         'expo-notifications',
         {
-          icon: './assets/notification-icon.png',
           color: '#FF5A3C',
         },
       ],

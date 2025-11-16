@@ -1,4 +1,4 @@
-import { User, Route, Stop, Subscription, Expense, Bus } from '../types';
+import { User, Route, Stop, Subscription, Expense, Bus, Driver } from '../types';
 
 // Mock data
 const mockUser: User = {
@@ -235,6 +235,76 @@ class MockApiService {
 
   getSubscriptions(): Subscription[] {
     return this.subscriptions;
+  }
+
+  // Driver management methods
+  async getDrivers(): Promise<Driver[]> {
+    await delay(500);
+    return [
+      {
+        id: 'driver-1',
+        name: 'John Smith',
+        email: 'john.smith@example.com',
+        phone: '+1234567890',
+        licenseNumber: 'DL123456',
+        busId: 'bus-001',
+        routeId: 'route-1',
+        isActive: true,
+      },
+      {
+        id: 'driver-2',
+        name: 'Jane Doe',
+        email: 'jane.doe@example.com',
+        phone: '+1234567891',
+        licenseNumber: 'DL123457',
+        busId: 'bus-002',
+        routeId: 'route-2',
+        isActive: true,
+      },
+    ];
+  }
+
+  async createDriver(driver: Omit<Driver, 'id'>): Promise<Driver> {
+    await delay(500);
+    const newDriver: Driver = {
+      id: `driver-${Date.now()}`,
+      ...driver,
+    };
+    return newDriver;
+  }
+
+  async deleteDriver(driverId: string): Promise<void> {
+    await delay(500);
+    // Mock deletion - in real app would call API
+  }
+
+  // Route management methods
+  async createRoute(route: Omit<Route, 'id'>): Promise<Route> {
+    await delay(500);
+    const newRoute: Route = {
+      id: `route-${Date.now()}`,
+      ...route,
+    };
+    mockRoutes.push(newRoute);
+    return newRoute;
+  }
+
+  async updateRoute(routeId: string, updates: Partial<Route>): Promise<Route> {
+    await delay(500);
+    const routeIndex = mockRoutes.findIndex((r) => r.id === routeId);
+    if (routeIndex === -1) {
+      throw new Error('Route not found');
+    }
+    mockRoutes[routeIndex] = { ...mockRoutes[routeIndex], ...updates };
+    return mockRoutes[routeIndex];
+  }
+
+  async deleteRoute(routeId: string): Promise<void> {
+    await delay(500);
+    const routeIndex = mockRoutes.findIndex((r) => r.id === routeId);
+    if (routeIndex !== -1) {
+      mockRoutes.splice(routeIndex, 1);
+    }
   }
 }
 

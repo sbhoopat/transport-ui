@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import SafeMapView from '../components/SafeMapView';
 import { useNavigation } from '@react-navigation/native';
@@ -55,13 +56,37 @@ const RouteSelectionScreen = () => {
       ]}
       onPress={() => setSelectedRoute(item)}
     >
-      <Text style={styles.routeName}>{item.name}</Text>
-      <Text style={styles.routeDescription}>{item.description}</Text>
-      <Text style={styles.routePrice}>${item.price.toFixed(2)}/month</Text>
+      <View style={styles.routeHeader}>
+        <View style={styles.routeIconContainer}>
+          <Ionicons name="bus" size={24} color="#FF5A3C" />
+        </View>
+        <View style={styles.routeInfo}>
+          <Text style={styles.routeName}>{item.name}</Text>
+          <Text style={styles.routeDescription}>{item.description}</Text>
+          <View style={styles.routeMeta}>
+            <View style={styles.metaItem}>
+              <Ionicons name="location" size={14} color="#666" />
+              <Text style={styles.metaText}>{item.stops.length} stops</Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Ionicons name="cash" size={14} color="#666" />
+              <Text style={styles.metaText}>${item.price.toFixed(2)}/month</Text>
+            </View>
+          </View>
+        </View>
+        <Ionicons 
+          name={selectedRoute?.id === item.id ? "chevron-up" : "chevron-down"} 
+          size={24} 
+          color="#666" 
+        />
+      </View>
 
       {selectedRoute?.id === item.id && (
         <View style={styles.stopsContainer}>
-          <Text style={styles.stopsTitle}>Select your stop:</Text>
+          <View style={styles.stopsHeader}>
+            <Ionicons name="location" size={20} color="#FF5A3C" />
+            <Text style={styles.stopsTitle}>Select your stop:</Text>
+          </View>
           {item.stops.map((stop) => (
             <TouchableOpacity
               key={stop.id}
@@ -71,8 +96,15 @@ const RouteSelectionScreen = () => {
               ]}
               onPress={() => setSelectedStop(stop)}
             >
-              <Text style={styles.stopName}>{stop.name}</Text>
-              <Text style={styles.stopAddress}>{stop.address}</Text>
+              <Ionicons 
+                name={selectedStop?.id === stop.id ? "radio-button-on" : "radio-button-off"} 
+                size={20} 
+                color={selectedStop?.id === stop.id ? "#FF5A3C" : "#999"} 
+              />
+              <View style={styles.stopInfo}>
+                <Text style={styles.stopName}>{stop.name}</Text>
+                <Text style={styles.stopAddress}>{stop.address}</Text>
+              </View>
             </TouchableOpacity>
           ))}
 
@@ -81,7 +113,8 @@ const RouteSelectionScreen = () => {
               style={styles.subscribeButton}
               onPress={() => handleSubscribe(item, selectedStop)}
             >
-              <Text style={styles.subscribeButtonText}>Subscribe</Text>
+              <Ionicons name="checkmark-circle" size={20} color="#fff" />
+              <Text style={styles.subscribeButtonText}>Subscribe to Route</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -159,7 +192,7 @@ const styles = StyleSheet.create({
   routeCard: {
     backgroundColor: '#fff',
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 12,
     marginBottom: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -171,21 +204,45 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FF5A3C',
   },
+  routeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  routeIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#FF5A3C15',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  routeInfo: {
+    flex: 1,
+  },
   routeName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#002133',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   routeDescription: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  routePrice: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FF5A3C',
+  routeMeta: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 12,
+    color: '#666',
   },
   stopsContainer: {
     marginTop: 15,
@@ -193,28 +250,39 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#eee',
   },
+  stopsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
   stopsTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#002133',
-    marginBottom: 10,
   },
   stopButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 15,
     backgroundColor: '#f5f5f5',
     borderRadius: 8,
     marginBottom: 10,
+    gap: 12,
   },
   selectedStop: {
     backgroundColor: '#FFE5E0',
     borderWidth: 2,
     borderColor: '#FF5A3C',
   },
+  stopInfo: {
+    flex: 1,
+  },
   stopName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#002133',
-    marginBottom: 5,
+    marginBottom: 2,
   },
   stopAddress: {
     fontSize: 14,
@@ -226,6 +294,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
   },
   subscribeButtonText: {
     color: '#fff',

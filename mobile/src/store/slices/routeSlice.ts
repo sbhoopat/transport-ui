@@ -26,6 +26,80 @@ export const fetchRoutes = createAsyncThunk(
   }
 );
 
+export const createRoute = createAsyncThunk(
+  'routes/create',
+  async ({ route, token }: { route: Omit<Route, 'id'>; token: string }) => {
+    if (USE_MOCK) {
+      return await mockApiService.createRoute(route);
+    }
+
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+    const response = await fetch(`${API_URL}/admin/routes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(route),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create route');
+    }
+
+    return response.json();
+  }
+);
+
+export const updateRoute = createAsyncThunk(
+  'routes/update',
+  async ({ routeId, route, token }: { routeId: string; route: Partial<Route>; token: string }) => {
+    if (USE_MOCK) {
+      return await mockApiService.updateRoute(routeId, route);
+    }
+
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+    const response = await fetch(`${API_URL}/admin/routes/${routeId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(route),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update route');
+    }
+
+    return response.json();
+  }
+);
+
+export const deleteRoute = createAsyncThunk(
+  'routes/delete',
+  async ({ routeId, token }: { routeId: string; token: string }) => {
+    if (USE_MOCK) {
+      await mockApiService.deleteRoute(routeId);
+      return routeId;
+    }
+
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+    const response = await fetch(`${API_URL}/admin/routes/${routeId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete route');
+    }
+
+    return routeId;
+  }
+);
+
 interface RouteState {
   routes: Route[];
   selectedRoute: Route | null;
@@ -64,6 +138,24 @@ const routeSlice = createSlice({
       .addCase(fetchRoutes.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.error.message || 'Failed to fetch routes';
+      })
+      .addCase(createRoute.fulfilled, (state, action) => {
+        state.routes.push(action.payload);
+      })
+      .addCase(updateRoute.fulfilled, (state, action) => {
+        const index = state.routes.findIndex((r) => r.id === action.payload.id);
+        if (index !== -1) {
+          state.routes[index] = action.payload;
+        }
+        if (state.selectedRoute?.id === action.payload.id) {
+          state.selectedRoute = action.payload;
+        }
+      })
+      .addCase(deleteRoute.fulfilled, (state, action) => {
+        state.routes = state.routes.filter((r) => r.id !== action.payload);
+        if (state.selectedRoute?.id === action.payload) {
+          state.selectedRoute = null;
+        }
       });
   },
 });

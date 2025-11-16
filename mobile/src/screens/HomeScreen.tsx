@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import SafeMapView from '../components/SafeMapView';
@@ -66,28 +67,47 @@ const HomeScreen = () => {
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Active Route</Text>
+            <View style={styles.cardHeader}>
+              <Ionicons name="bus" size={24} color="#FF5A3C" />
+              <Text style={styles.cardTitle}>Active Route</Text>
+            </View>
             <Text style={styles.routeName}>{activeRoute.name}</Text>
             <Text style={styles.routeDescription}>
               {activeRoute.description}
             </Text>
+            <View style={styles.routeStats}>
+              <View style={styles.statItem}>
+                <Ionicons name="location" size={16} color="#666" />
+                <Text style={styles.statText}>{activeRoute.stops.length} Stops</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Ionicons name="cash" size={16} color="#666" />
+                <Text style={styles.statText}>${activeRoute.price.toFixed(2)}</Text>
+              </View>
+            </View>
             <TouchableOpacity
               style={styles.trackButton}
               onPress={() =>
                 navigation.navigate('LiveTracking', { routeId: activeRoute.id })
               }
             >
-              <Text style={styles.trackButtonText}>Track Bus</Text>
+              <Ionicons name="location" size={20} color="#fff" />
+              <Text style={styles.trackButtonText}>Track Bus Live</Text>
             </TouchableOpacity>
           </View>
         </>
       ) : (
         <View style={styles.emptyContainer}>
+          <Ionicons name="map-outline" size={64} color="#999" />
           <Text style={styles.emptyText}>No active subscription</Text>
+          <Text style={styles.emptySubtext}>
+            Subscribe to a route to start tracking your bus
+          </Text>
           <TouchableOpacity
             style={styles.subscribeButton}
             onPress={() => navigation.navigate('Routes')}
           >
+            <Ionicons name="search" size={20} color="#fff" />
             <Text style={styles.subscribeButtonText}>Browse Routes</Text>
           </TouchableOpacity>
         </View>
@@ -121,11 +141,31 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#002133',
-    marginBottom: 10,
+  },
+  routeStats: {
+    flexDirection: 'row',
+    gap: 20,
+    marginTop: 10,
+    marginBottom: 15,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statText: {
+    fontSize: 14,
+    color: '#666',
   },
   routeName: {
     fontSize: 24,
@@ -143,6 +183,9 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
   },
   trackButtonText: {
     color: '#fff',
@@ -159,6 +202,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     color: '#666',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
     marginBottom: 20,
   },
   subscribeButton: {
@@ -166,6 +216,9 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     paddingHorizontal: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   subscribeButtonText: {
     color: '#fff',

@@ -4,6 +4,7 @@ import routeReducer from './slices/routeSlice';
 import busReducer from './slices/busSlice';
 import subscriptionReducer from './slices/subscriptionSlice';
 import expenseReducer from './slices/expenseSlice';
+import driverReducer from './slices/driverSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     bus: busReducer,
     subscriptions: subscriptionReducer,
     expenses: expenseReducer,
+    drivers: driverReducer,
   },
 });
 

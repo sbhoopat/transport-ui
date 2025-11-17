@@ -13,7 +13,7 @@ export default {
     slug: 'bustrackr',
     version: '1.0.0',
     orientation: 'portrait',
-    icon: './assets/icon-school-ai-bus.png',
+    icon: './assets/icon.png',
     userInterfaceStyle: 'light',
     splash: {
       image: './assets/splash.png',
@@ -31,7 +31,7 @@ export default {
           'BusTrackr needs your location for real-time tracking.',
       },
       config: {
-        googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'PLACEHOLDER_API_KEY_REPLACE_LATER',
+        googleMapsApiKey: 'DEMO_API_KEY_REPLACE_LATER',
       },
     },
     android: {
@@ -43,7 +43,7 @@ export default {
       permissions: ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION'],
       config: {
         googleMaps: {
-          apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || 'PLACEHOLDER_API_KEY_REPLACE_LATER',
+          apiKey: 'DEMO_API_KEY_REPLACE_LATER',
         },
       },
     },
@@ -61,10 +61,10 @@ export default {
       [
         'expo-notifications',
         {
-          color: '#FF5A3C',
+          color: '#f97316',
         },
       ],
-      // react-native-maps doesn't have a config plugin, API key is set in ios/android config above
+      // Google Maps API key is set in ios/android config above
     ],
     extra: {
       eas: {

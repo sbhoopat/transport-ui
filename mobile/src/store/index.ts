@@ -5,6 +5,8 @@ import busReducer from './slices/busSlice';
 import subscriptionReducer from './slices/subscriptionSlice';
 import expenseReducer from './slices/expenseSlice';
 import driverReducer from './slices/driverSlice';
+import businessReducer from './slices/businessSlice';
+import notificationReducer from './slices/notificationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +16,8 @@ export const store = configureStore({
     subscriptions: subscriptionReducer,
     expenses: expenseReducer,
     drivers: driverReducer,
+    businesses: businessReducer,
+    notifications: notificationReducer,
   },
 });
 

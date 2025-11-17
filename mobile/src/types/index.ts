@@ -2,7 +2,17 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'parent' | 'admin' | 'driver';
+  role: 'parent' | 'admin' | 'driver' | 'developer';
+}
+
+export interface BusinessType {
+  id: string;
+  name: string;
+  type: 'school' | 'infra' | 'corporate' | 'other';
+  role: string;
+  startDate: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Route {
@@ -92,5 +102,14 @@ export interface Driver {
   busId?: string;
   routeId?: string;
   isActive: boolean;
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'alert';
+  timestamp: string;
+  isRead: boolean;
 }
 

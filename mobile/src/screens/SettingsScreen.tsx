@@ -9,6 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+import GradientButton from '../components/GradientButton';
 import { logout } from '../store/slices/authSlice';
 import { socketService } from '../services/socket';
 
@@ -28,7 +29,7 @@ const SettingsScreen = () => {
         <Text style={styles.sectionTitle}>Profile</Text>
         <View style={styles.profileCard}>
           <View style={styles.profileRow}>
-            <Ionicons name="person" size={20} color="#FF5A3C" />
+            <Ionicons name="person" size={20} color="#f97316" />
             <View style={styles.profileInfo}>
               <Text style={styles.profileLabel}>Name</Text>
               <Text style={styles.profileValue}>{user?.name || 'N/A'}</Text>
@@ -37,7 +38,7 @@ const SettingsScreen = () => {
         </View>
         <View style={styles.profileCard}>
           <View style={styles.profileRow}>
-            <Ionicons name="mail" size={20} color="#FF5A3C" />
+            <Ionicons name="mail" size={20} color="#f97316" />
             <View style={styles.profileInfo}>
               <Text style={styles.profileLabel}>Email</Text>
               <Text style={styles.profileValue}>{user?.email || 'N/A'}</Text>
@@ -46,7 +47,7 @@ const SettingsScreen = () => {
         </View>
         <View style={styles.profileCard}>
           <View style={styles.profileRow}>
-            <Ionicons name="shield" size={20} color="#FF5A3C" />
+            <Ionicons name="shield" size={20} color="#f97316" />
             <View style={styles.profileInfo}>
               <Text style={styles.profileLabel}>Role</Text>
               <Text style={styles.profileValue}>
@@ -102,10 +103,12 @@ const SettingsScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Ionicons name="log-out" size={20} color="#fff" />
-        <Text style={styles.logoutButtonText}>Logout</Text>
-      </TouchableOpacity>
+      <GradientButton
+        title="Logout"
+        icon="log-out"
+        onPress={handleLogout}
+        style={styles.logoutButton}
+      />
     </ScrollView>
   );
 };
@@ -178,19 +181,8 @@ const styles = StyleSheet.create({
     color: '#002133',
   },
   logoutButton: {
-    backgroundColor: '#FF5A3C',
     margin: 20,
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    // GradientButton handles styling
   },
 });
 

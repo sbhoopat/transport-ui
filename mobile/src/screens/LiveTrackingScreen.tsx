@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Linking,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import SafeMapView from '../components/SafeMapView';
@@ -15,7 +16,9 @@ import { updateBusLocation, setTracking, setActiveBus } from '../store/slices/bu
 import { socketService } from '../services/socket';
 import AnimatedBusMarker from '../components/AnimatedBusMarker';
 import { BusUpdate, UpcomingStopAlert } from '../types';
+import GradientButton from '../components/GradientButton';
 import * as Notifications from 'expo-notifications';
+import { DEFAULT_COORDINATES, isValidCoordinate, getSafeCoordinate, getSafePolyline } from '../utils/coordinates';
 
 const LiveTrackingScreen = () => {
   const route = useRoute();
@@ -26,12 +29,21 @@ const LiveTrackingScreen = () => {
   const { activeBus, currentLocation, isTracking } = useAppSelector(
     (state) => state.bus
   );
-  const { routes } = useAppSelector((state) => state.routes);
+  const { routes, isLoading: routesLoading } = useAppSelector((state) => state.routes);
 
-  const currentRoute = routes.find((r) => r.id === routeId);
+  // Load routes if not loaded
+  useEffect(() => {
+    if (token && routes.length === 0 && !routesLoading) {
+      // @ts-ignore
+      dispatch(fetchRoutes(token));
+    }
+  }, [token, routes.length, routesLoading, dispatch]);
+
+  const currentRoute = routes.find((r) => r.id === routeId) || routes[0]; // Fallback to first route
 
   useEffect(() => {
     if (!token) return;
+    if (!currentRoute) return; // Wait for route to load
 
     // Initialize mock bus if not set
     if (!activeBus && currentRoute) {
@@ -92,9 +104,25 @@ const LiveTrackingScreen = () => {
     }
   };
 
-  if (!currentRoute || !currentLocation) {
+  // Get safe current location or default - ensure it's always a valid object
+  const safeCurrentLocation = React.useMemo(() => {
+    const safe = getSafeCoordinate(currentLocation, DEFAULT_COORDINATES);
+    // Double-check that we have valid numbers
+    return {
+      latitude: typeof safe.latitude === 'number' && !isNaN(safe.latitude) && isFinite(safe.latitude)
+        ? safe.latitude
+        : DEFAULT_COORDINATES.latitude,
+      longitude: typeof safe.longitude === 'number' && !isNaN(safe.longitude) && isFinite(safe.longitude)
+        ? safe.longitude
+        : DEFAULT_COORDINATES.longitude,
+    };
+  }, [currentLocation]);
+  
+  // Get safe route or show loading
+  if (routesLoading || !currentRoute) {
     return (
       <View style={styles.container}>
+        <ActivityIndicator size="large" color="#f97316" style={{ marginTop: 50 }} />
         <Text style={styles.loadingText}>Loading route...</Text>
       </View>
     );
@@ -104,40 +132,163 @@ const LiveTrackingScreen = () => {
   const nextStop = currentRoute.stops[currentStopIndex + 1];
   const previousStop = currentRoute.stops[currentStopIndex - 1];
 
+  // Get safe region for map - ensure all values are valid numbers
+  const safeRegion = {
+    latitude: typeof safeCurrentLocation.latitude === 'number' && 
+              !isNaN(safeCurrentLocation.latitude) && 
+              isFinite(safeCurrentLocation.latitude)
+      ? safeCurrentLocation.latitude
+      : DEFAULT_COORDINATES.latitude,
+    longitude: typeof safeCurrentLocation.longitude === 'number' && 
+               !isNaN(safeCurrentLocation.longitude) && 
+               isFinite(safeCurrentLocation.longitude)
+      ? safeCurrentLocation.longitude
+      : DEFAULT_COORDINATES.longitude,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  };
+
   return (
     <View style={styles.container}>
       <SafeMapView
         style={styles.map}
-        region={{
-          latitude: currentLocation.latitude,
-          longitude: currentLocation.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
+        region={safeRegion}
         showsUserLocation
-        fallbackMessage="Live tracking map unavailable - Google Maps API key not configured"
       >
-        {currentRoute.stops.map((stop, index) => (
-          <Marker
-            key={stop.id}
-            coordinate={{
-              latitude: stop.latitude,
-              longitude: stop.longitude,
-            }}
-            title={stop.name}
-            pinColor={index === currentStopIndex + 1 ? '#FF5A3C' : '#666'}
-          />
-        ))}
+        {currentRoute && currentRoute.stops && Array.isArray(currentRoute.stops) && currentRoute.stops.length > 0
+          ? currentRoute.stops
+              .filter((stop) => stop && stop.id)
+              .map((stop, index) => {
+                // Hardcode coordinates - use default if invalid
+                let lat = DEFAULT_COORDINATES.latitude;
+                let lng = DEFAULT_COORDINATES.longitude;
+                
+                if (stop && typeof stop.latitude === 'number' && !isNaN(stop.latitude) && isFinite(stop.latitude)) {
+                  lat = stop.latitude;
+                }
+                if (stop && typeof stop.longitude === 'number' && !isNaN(stop.longitude) && isFinite(stop.longitude)) {
+                  lng = stop.longitude;
+                }
+                
+                // Add slight offset for multiple stops at same location
+                const offset = index * 0.001;
+                
+                // Ensure final values are valid numbers
+                const finalLat = typeof lat === 'number' && !isNaN(lat) && isFinite(lat) 
+                  ? lat + offset 
+                  : DEFAULT_COORDINATES.latitude;
+                const finalLng = typeof lng === 'number' && !isNaN(lng) && isFinite(lng) 
+                  ? lng + offset 
+                  : DEFAULT_COORDINATES.longitude;
+                
+                // Always return a valid coordinate object
+                const markerCoordinate = {
+                  latitude: finalLat,
+                  longitude: finalLng,
+                };
+                
+                return (
+                  <Marker
+                    key={stop.id || `stop-${index}`}
+                    coordinate={markerCoordinate}
+                    title={stop.name || 'Stop'}
+                    pinColor={index === currentStopIndex + 1 ? '#f97316' : '#666'}
+                  />
+                );
+              })
+          : null}
 
-        {currentRoute.polyline && (
-          <Polyline
-            coordinates={currentRoute.polyline}
-            strokeColor="#FF5A3C"
-            strokeWidth={3}
-          />
-        )}
+        {(() => {
+          // Hardcode polyline coordinates - use stops or default
+          let polylineCoords: Array<{ latitude: number; longitude: number }> = [];
+          
+          if (currentRoute && currentRoute.polyline && Array.isArray(currentRoute.polyline) && currentRoute.polyline.length > 0) {
+            // Use polyline if valid
+            polylineCoords = currentRoute.polyline
+              .filter((coord) => coord !== null && coord !== undefined)
+              .map((coord) => {
+                const lat = (coord && typeof coord === 'object' && typeof coord.latitude === 'number' && !isNaN(coord.latitude) && isFinite(coord.latitude))
+                  ? coord.latitude
+                  : DEFAULT_COORDINATES.latitude;
+                const lng = (coord && typeof coord === 'object' && typeof coord.longitude === 'number' && !isNaN(coord.longitude) && isFinite(coord.longitude))
+                  ? coord.longitude
+                  : DEFAULT_COORDINATES.longitude;
+                // Always return a fresh object
+                return { 
+                  latitude: Number(lat), 
+                  longitude: Number(lng) 
+                };
+              })
+              .filter((coord) => 
+                typeof coord.latitude === 'number' && 
+                typeof coord.longitude === 'number' &&
+                !isNaN(coord.latitude) && 
+                !isNaN(coord.longitude) &&
+                isFinite(coord.latitude) &&
+                isFinite(coord.longitude)
+              );
+          } else if (currentRoute && currentRoute.stops && Array.isArray(currentRoute.stops) && currentRoute.stops.length > 0) {
+            // Fallback to stops
+            polylineCoords = currentRoute.stops
+              .filter((stop) => stop !== null && stop !== undefined)
+              .map((stop) => {
+                const lat = (stop && typeof stop === 'object' && typeof stop.latitude === 'number' && !isNaN(stop.latitude) && isFinite(stop.latitude))
+                  ? stop.latitude
+                  : DEFAULT_COORDINATES.latitude;
+                const lng = (stop && typeof stop === 'object' && typeof stop.longitude === 'number' && !isNaN(stop.longitude) && isFinite(stop.longitude))
+                  ? stop.longitude
+                  : DEFAULT_COORDINATES.longitude;
+                // Always return a fresh object
+                return { 
+                  latitude: Number(lat), 
+                  longitude: Number(lng) 
+                };
+              })
+              .filter((coord) => 
+                typeof coord.latitude === 'number' && 
+                typeof coord.longitude === 'number' &&
+                !isNaN(coord.latitude) && 
+                !isNaN(coord.longitude) &&
+                isFinite(coord.latitude) &&
+                isFinite(coord.longitude)
+              );
+          }
+          
+          // Ensure we have at least one valid coordinate
+          if (polylineCoords.length === 0) {
+            polylineCoords = [{ 
+              latitude: DEFAULT_COORDINATES.latitude, 
+              longitude: DEFAULT_COORDINATES.longitude 
+            }];
+          }
+          
+          // Final validation - ensure all coordinates are valid objects
+          const validCoords = polylineCoords.filter((coord) => 
+            coord && 
+            typeof coord === 'object' &&
+            typeof coord.latitude === 'number' && 
+            typeof coord.longitude === 'number' &&
+            !isNaN(coord.latitude) && 
+            !isNaN(coord.longitude) &&
+            isFinite(coord.latitude) &&
+            isFinite(coord.longitude)
+          );
+          
+          if (validCoords.length === 0) {
+            return null;
+          }
+          
+          return (
+            <Polyline
+              coordinates={validCoords}
+              strokeColor="#f97316"
+              strokeWidth={3}
+            />
+          );
+        })()}
 
-        <AnimatedBusMarker coordinate={currentLocation} />
+        {/* Always render bus marker with safe coordinates - AnimatedBusMarker handles validation */}
+        <AnimatedBusMarker coordinate={safeCurrentLocation} />
       </SafeMapView>
 
       <View style={styles.infoCard}>
@@ -145,12 +296,12 @@ const LiveTrackingScreen = () => {
           <Text style={styles.driverName}>
             {activeBus?.driverName || 'Driver'}
           </Text>
-          <TouchableOpacity
-            style={styles.callButton}
+          <GradientButton
+            title="Call Driver"
+            icon="call"
             onPress={handleCallDriver}
-          >
-            <Text style={styles.callButtonText}>Call Driver</Text>
-          </TouchableOpacity>
+            style={styles.callButton}
+          />
         </View>
 
         <View style={styles.stopInfo}>
@@ -219,14 +370,7 @@ const styles = StyleSheet.create({
     color: '#002133',
   },
   callButton: {
-    backgroundColor: '#FF5A3C',
-    padding: 10,
-    borderRadius: 8,
-    paddingHorizontal: 20,
-  },
-  callButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    // GradientButton handles styling
   },
   stopInfo: {
     gap: 10,
@@ -248,7 +392,7 @@ const styles = StyleSheet.create({
   },
   nextStop: {
     fontWeight: 'bold',
-    color: '#FF5A3C',
+    color: '#f97316',
   },
   eta: {
     fontSize: 14,

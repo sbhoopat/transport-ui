@@ -1,36 +1,36 @@
 # Assets Folder
 
-This folder contains the app icons, splash screens, and other static assets.
+This folder contains the app icons, splash screens, and other static assets for **BusTrackr**.
 
 ## Required Files
 
-### 1. icon.png
+### 1. icon.png / icon-school-ai-bus.png
 - **Size**: 1024x1024 pixels
 - **Format**: PNG
 - **Purpose**: Main app icon (iOS and Android)
-- **Background**: Should match your brand (recommended: #1A3B6A)
-- **Content**: Meetrix logo (hands shaking with person icon)
+- **Background**: Should match your brand (recommended: #002133 for BusTrackr)
+- **Content**: Bus icon or BusTrackr logo
 
 ### 2. adaptive-icon.png
 - **Size**: 1024x1024 pixels
 - **Format**: PNG
 - **Purpose**: Android adaptive icon
-- **Background**: #1A3B6A (deep blue)
-- **Content**: Meetrix logo (hands shaking with person icon)
+- **Background**: #002133 (dark blue for BusTrackr)
+- **Content**: Bus icon or BusTrackr logo
 
 ### 3. splash.png
 - **Size**: 1284x2778 pixels (or any size with 9:16 aspect ratio)
 - **Format**: PNG
 - **Purpose**: App splash screen
-- **Background**: #1A3B6A (deep blue)
-- **Content**: Meetrix logo centered
+- **Background**: #002133 (dark blue for BusTrackr)
+- **Content**: BusTrackr logo or bus icon centered
 
 ### 4. favicon.png
 - **Size**: 48x48 pixels
 - **Format**: PNG
 - **Purpose**: Web favicon
-- **Background**: Transparent or #1A3B6A
-- **Content**: Meetrix logo (simplified version)
+- **Background**: Transparent or #002133
+- **Content**: BusTrackr logo or bus icon (simplified version)
 
 ## Creating Icons from Your Logo
 
@@ -42,24 +42,24 @@ This folder contains the app icons, splash screens, and other static assets.
 
 ### Option 2: Manual Creation
 1. Start with a 1024x1024px canvas
-2. Background: #1A3B6A (deep blue)
-3. Add your Meetrix logo (hands shaking with person icon)
+2. Background: #002133 (dark blue for BusTrackr)
+3. Add your BusTrackr logo or bus icon
 4. Center the logo with appropriate padding
 5. Export as PNG
 
 ### Option 3: Using ImageMagick (Command Line)
 ```bash
 # Convert and resize your logo
-convert logo.png -resize 1024x1024 -background "#1A3B6A" -gravity center -extent 1024x1024 assets/icon.png
+convert logo.png -resize 1024x1024 -background "#002133" -gravity center -extent 1024x1024 assets/icon.png
 ```
 
 ## Logo Description
 
-Your Meetrix logo features:
-- **Main Element**: Two hands shaking, forming an inverted heart shape
-- **Top Element**: A person icon (circle for head, curved line for shoulders, small circle on top)
-- **Text**: "Meetrix" in elegant cursive/connected script
-- **Color**: Deep blue (#1A3B6A)
+Your BusTrackr logo should feature:
+- **Main Element**: Bus icon or bus tracking symbol
+- **Theme**: School bus, transportation, or GPS tracking related
+- **Text**: "BusTrackr" (optional)
+- **Color**: Dark blue (#002133) with accent orange (#FF5A3C)
 
 ## Temporary Placeholder
 

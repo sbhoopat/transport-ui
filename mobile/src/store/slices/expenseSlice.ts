@@ -32,14 +32,15 @@ export const addExpense = createAsyncThunk(
     expense,
     token,
   }: {
-    expense: Omit<Expense, 'id' | 'date'>;
+    expense: Omit<Expense, 'id'>;
     token: string;
   }) => {
     if (USE_MOCK) {
       return await mockApiService.addExpense(
         expense.category,
         expense.amount,
-        expense.description || ''
+        expense.description || '',
+        expense.date || new Date().toISOString()
       );
     }
 

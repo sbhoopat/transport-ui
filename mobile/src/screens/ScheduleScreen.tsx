@@ -31,7 +31,7 @@ const ScheduleScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Ionicons name="time" size={32} color="#FF5A3C" />
+        <Ionicons name="time" size={32} color="#fff" />
         <Text style={styles.headerTitle}>Bus Schedule</Text>
       </View>
 
@@ -39,7 +39,7 @@ const ScheduleScreen = () => {
         <>
           <View style={styles.routeCard}>
             <View style={styles.routeHeader}>
-              <Ionicons name="bus" size={24} color="#FF5A3C" />
+              <Ionicons name="bus" size={24} color="#f97316" />
               <Text style={styles.routeName}>{activeRoute.name}</Text>
             </View>
             <Text style={styles.routeDescription}>{activeRoute.description}</Text>
@@ -108,10 +108,14 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#002133',
     padding: 20,
-    paddingTop: 40,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   headerTitle: {
     fontSize: 24,

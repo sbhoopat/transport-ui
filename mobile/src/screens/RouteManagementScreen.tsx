@@ -9,13 +9,20 @@ import {
   Alert,
   FlatList,
   Modal,
+  ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+import GradientButton from '../components/GradientButton';
 import { fetchRoutes, createRoute, updateRoute, deleteRoute } from '../store/slices/routeSlice';
 import { Route, Stop } from '../types';
 import SafeMapView from '../components/SafeMapView';
-import MapView, { Marker } from 'react-native-maps';
+import { Marker, Polyline } from 'react-native-maps';
+import { generateRoutePolyline } from '../utils/googleMaps';
+
+const { width } = Dimensions.get('window');
+const BUTTON_WIDTH = (width - 60) / 2; // 2 buttons per row with padding
 
 const RouteManagementScreen = () => {
   const dispatch = useAppDispatch();
@@ -31,6 +38,7 @@ const RouteManagementScreen = () => {
   const [newStopAddress, setNewStopAddress] = useState('');
   const [newStopLat, setNewStopLat] = useState('');
   const [newStopLng, setNewStopLng] = useState('');
+  const [isGeneratingRoute, setIsGeneratingRoute] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -44,24 +52,75 @@ const RouteManagementScreen = () => {
       return;
     }
 
-    const routeData: Omit<Route, 'id'> = {
-      name,
-      description,
-      price: parseFloat(price),
-      stops,
-      polyline: stops.map((s) => ({ latitude: s.latitude, longitude: s.longitude })),
-    };
-
-    if (editingRoute) {
-      await dispatch(updateRoute({ routeId: editingRoute.id, route: routeData, token: token! }));
-      Alert.alert('Success', 'Route updated successfully');
-    } else {
-      await dispatch(createRoute({ route: routeData, token: token! }));
-      Alert.alert('Success', 'Route created successfully');
+    if (stops.length < 2) {
+      Alert.alert('Error', 'At least 2 stops are required to generate a route');
+      return;
     }
 
-    resetForm();
-    setModalVisible(false);
+    setIsGeneratingRoute(true);
+    try {
+      // Generate route polyline using Google Maps Directions API
+      const stopCoordinates = stops.map((s) => ({
+        latitude: s.latitude,
+        longitude: s.longitude,
+      }));
+      
+      const apiKey = 'DEMO_API_KEY_REPLACE_LATER'; // Replace with actual API key
+      const polyline = await generateRoutePolyline(stopCoordinates, apiKey);
+
+      const routeData: Omit<Route, 'id'> = {
+        name,
+        description,
+        price: parseFloat(price),
+        stops,
+        polyline,
+      };
+
+      if (editingRoute) {
+        await dispatch(updateRoute({ routeId: editingRoute.id, route: routeData as Partial<Route>, token: token! }));
+        Alert.alert('Success', 'Route updated successfully');
+      } else {
+        await dispatch(createRoute({ route: routeData, token: token! }));
+        Alert.alert('Success', 'Route created successfully');
+      }
+
+      resetForm();
+      setModalVisible(false);
+    } catch (error) {
+      console.error('Error generating route:', error);
+      Alert.alert(
+        'Warning',
+        'Could not generate route path. Using direct line between stops.',
+        [
+          {
+            text: 'Continue',
+            onPress: async () => {
+              // Fallback to direct line
+              const routeData: Omit<Route, 'id'> = {
+                name,
+                description,
+                price: parseFloat(price),
+                stops,
+                polyline: stops.map((s) => ({ latitude: s.latitude, longitude: s.longitude })),
+              };
+
+              if (editingRoute) {
+                await dispatch(updateRoute({ routeId: editingRoute.id, route: routeData as Partial<Route>, token: token! }));
+                Alert.alert('Success', 'Route updated successfully');
+              } else {
+                await dispatch(createRoute({ route: routeData, token: token! }));
+                Alert.alert('Success', 'Route created successfully');
+              }
+
+              resetForm();
+              setModalVisible(false);
+            },
+          },
+        ]
+      );
+    } finally {
+      setIsGeneratingRoute(false);
+    }
   };
 
   const handleEdit = (route: Route) => {
@@ -97,12 +156,25 @@ const RouteManagementScreen = () => {
       return;
     }
 
+    const lat = parseFloat(newStopLat);
+    const lng = parseFloat(newStopLng);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      Alert.alert('Error', 'Please enter valid coordinates');
+      return;
+    }
+
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      Alert.alert('Error', 'Coordinates out of range. Latitude: -90 to 90, Longitude: -180 to 180');
+      return;
+    }
+
     const newStop: Stop = {
       id: `stop-${Date.now()}`,
       name: newStopName,
       address: newStopAddress,
-      latitude: parseFloat(newStopLat),
-      longitude: parseFloat(newStopLng),
+      latitude: lat,
+      longitude: lng,
       index: stops.length,
     };
 
@@ -133,16 +205,15 @@ const RouteManagementScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Route Management</Text>
-        <TouchableOpacity
-          style={styles.addButton}
+        <GradientButton
+          title="New Route"
+          icon="add-circle"
           onPress={() => {
             resetForm();
             setModalVisible(true);
           }}
-        >
-          <Ionicons name="add-circle" size={24} color="#fff" />
-          <Text style={styles.addButtonText}>New Route</Text>
-        </TouchableOpacity>
+          style={styles.addButton}
+        />
       </View>
 
       <FlatList
@@ -152,7 +223,7 @@ const RouteManagementScreen = () => {
           <View style={styles.routeCard}>
             <View style={styles.routeHeader}>
               <View style={styles.routeInfo}>
-                <Ionicons name="bus" size={24} color="#FF5A3C" />
+                <Ionicons name="bus" size={24} color="#f97316" />
                 <View style={styles.routeDetails}>
                   <Text style={styles.routeName}>{item.name}</Text>
                   <Text style={styles.routeDescription}>{item.description}</Text>
@@ -171,7 +242,7 @@ const RouteManagementScreen = () => {
                   style={styles.deleteButton}
                   onPress={() => handleDelete(item.id)}
                 >
-                  <Ionicons name="trash" size={20} color="#FF5A3C" />
+                  <Ionicons name="trash" size={20} color="#f97316" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -240,14 +311,14 @@ const RouteManagementScreen = () => {
                 {stops.map((stop) => (
                   <View key={stop.id} style={styles.stopItem}>
                     <View style={styles.stopInfo}>
-                      <Ionicons name="location" size={20} color="#FF5A3C" />
+                      <Ionicons name="location" size={20} color="#f97316" />
                       <View style={styles.stopDetails}>
                         <Text style={styles.stopName}>{stop.name}</Text>
                         <Text style={styles.stopAddress}>{stop.address}</Text>
                       </View>
                     </View>
                     <TouchableOpacity onPress={() => removeStop(stop.id)}>
-                      <Ionicons name="close-circle" size={24} color="#FF5A3C" />
+                      <Ionicons name="close-circle" size={24} color="#f97316" />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -283,10 +354,46 @@ const RouteManagementScreen = () => {
                 keyboardType="numeric"
               />
             </View>
-            <TouchableOpacity style={styles.addStopButton} onPress={addStop}>
-              <Ionicons name="add" size={20} color="#fff" />
-              <Text style={styles.addStopButtonText}>Add Stop</Text>
-            </TouchableOpacity>
+            <GradientButton
+              title="Add Stop"
+              icon="add"
+              onPress={addStop}
+              style={styles.addStopButton}
+            />
+
+            {stops.length > 0 && (
+              <>
+                <Text style={styles.sectionTitle}>Route Map Preview</Text>
+                <View style={{ height: 200, marginBottom: 15, borderRadius: 12, overflow: 'hidden' }}>
+                  <SafeMapView
+                    style={{ flex: 1 }}
+                    initialRegion={{
+                      latitude: stops[0]?.latitude || 37.78825,
+                      longitude: stops[0]?.longitude || -122.4324,
+                      latitudeDelta: 0.1,
+                      longitudeDelta: 0.1,
+                    }}
+                  >
+                    {stops.map((stop) => (
+                      <Marker
+                        key={stop.id}
+                        coordinate={{ latitude: stop.latitude, longitude: stop.longitude }}
+                        title={stop.name}
+                        pinColor="#f97316"
+                      />
+                    ))}
+
+                    {stops.length > 1 && (
+                      <Polyline
+                        coordinates={stops.map((s) => ({ latitude: s.latitude, longitude: s.longitude }))}
+                        strokeColor="#f97316"
+                        strokeWidth={3}
+                      />
+                    )}
+                  </SafeMapView>
+                </View>
+              </>
+            )}
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -295,15 +402,19 @@ const RouteManagementScreen = () => {
                   setModalVisible(false);
                   resetForm();
                 }}
+                disabled={isGeneratingRoute}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton]}
-                onPress={handleSave}
-              >
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
+              <View style={{ flex: 1 }}>
+                <GradientButton
+                  title={isGeneratingRoute ? "Generating Route..." : "Save"}
+                  icon={isGeneratingRoute ? undefined : "checkmark"}
+                  onPress={handleSave}
+                  disabled={isGeneratingRoute}
+                  loading={isGeneratingRoute}
+                />
+              </View>
             </View>
           </ScrollView>
         </View>
@@ -318,35 +429,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: '#002133',
     padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#002133',
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FF5A3C',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    gap: 8,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    // GradientButton handles styling
   },
   routeCard: {
     backgroundColor: '#fff',
@@ -367,7 +470,7 @@ const styles = StyleSheet.create({
   routeInfo: {
     flexDirection: 'row',
     flex: 1,
-    gap: 12,
+    gap: 15,
   },
   routeDetails: {
     flex: 1,
@@ -386,12 +489,12 @@ const styles = StyleSheet.create({
   routePrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FF5A3C',
+    color: '#f97316',
     marginBottom: 4,
   },
   routeStops: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: 14,
+    color: '#666',
   },
   routeActions: {
     flexDirection: 'row',
@@ -399,9 +502,13 @@ const styles = StyleSheet.create({
   },
   editButton: {
     padding: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
   },
   deleteButton: {
     padding: 8,
+    backgroundColor: '#fff',
+    borderRadius: 8,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -451,7 +558,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   textArea: {
-    height: 80,
+    minHeight: 80,
     textAlignVertical: 'top',
   },
   sectionTitle: {
@@ -459,7 +566,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#002133',
     marginTop: 10,
-    marginBottom: 10,
+    marginBottom: 15,
   },
   stopsList: {
     marginBottom: 15,
@@ -471,77 +578,76 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     padding: 12,
     borderRadius: 8,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   stopInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    gap: 10,
+    gap: 12,
   },
   stopDetails: {
     flex: 1,
   },
   stopName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#002133',
+    marginBottom: 4,
   },
   stopAddress: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
-    marginTop: 2,
   },
   coordRow: {
     flexDirection: 'row',
     gap: 10,
+    marginBottom: 15,
   },
   coordInput: {
     flex: 1,
   },
   addStopButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#002133',
-    padding: 12,
-    borderRadius: 8,
     marginBottom: 15,
-    gap: 8,
-  },
-  addStopButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    // GradientButton handles styling
   },
   modalButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
     marginTop: 20,
+    justifyContent: 'space-between',
   },
   modalButton: {
-    flex: 1,
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
+    width: BUTTON_WIDTH,
+    minWidth: BUTTON_WIDTH,
+    maxWidth: BUTTON_WIDTH,
   },
   cancelButton: {
-    backgroundColor: '#ddd',
+    backgroundColor: '#f0f0f0',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    width: BUTTON_WIDTH,
+    minWidth: BUTTON_WIDTH,
+    maxWidth: BUTTON_WIDTH,
   },
   cancelButtonText: {
-    color: '#666',
+    color: '#002133',
     fontWeight: 'bold',
     fontSize: 16,
   },
   saveButton: {
-    backgroundColor: '#FF5A3C',
+    // GradientButton handles styling
   },
-  saveButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 });
 
 export default RouteManagementScreen;
-

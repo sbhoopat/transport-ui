@@ -24,10 +24,19 @@ const AdminMenuScreen = () => {
     {
       id: 'routes',
       title: 'Route Management',
-      icon: 'bus',
-      color: '#FF5A3C',
+      icon: 'create',
+      color: '#f97316',
       screen: 'RouteManagement',
-      description: 'Create and manage bus routes',
+      description: 'Add and modify bus routes',
+      count: routes.length,
+    },
+    {
+      id: 'viewRoutes',
+      title: 'View Routes',
+      icon: 'map',
+      color: '#00BCD4',
+      screen: 'Routes',
+      description: 'View all available routes',
       count: routes.length,
     },
     {
@@ -40,15 +49,6 @@ const AdminMenuScreen = () => {
       count: drivers.length,
     },
     {
-      id: 'expenses',
-      title: 'Expenses',
-      icon: 'cash',
-      color: '#2196F3',
-      screen: 'AdminDashboard',
-      description: 'Track and manage expenses',
-      count: expenses.length,
-    },
-    {
       id: 'tracking',
       title: 'Live Tracking',
       icon: 'location',
@@ -57,12 +57,12 @@ const AdminMenuScreen = () => {
       description: 'Monitor bus locations',
     },
     {
-      id: 'analytics',
-      title: 'Analytics',
-      icon: 'stats-chart',
+      id: 'schedule',
+      title: 'Bus Schedule',
+      icon: 'time',
       color: '#FF9800',
-      screen: 'Analytics',
-      description: 'View reports and insights',
+      screen: 'Schedule',
+      description: 'View and manage schedules',
     },
     {
       id: 'notifications',
@@ -71,6 +71,14 @@ const AdminMenuScreen = () => {
       color: '#F44336',
       screen: 'Notifications',
       description: 'Manage alerts and notifications',
+    },
+    {
+      id: 'sendNotification',
+      title: 'Send Notification',
+      icon: 'send',
+      color: '#9C27B0',
+      screen: 'SendNotification',
+      description: 'Broadcast message to all users',
     },
   ];
 
@@ -82,13 +90,13 @@ const AdminMenuScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Admin Dashboard</Text>
+        <Text style={styles.headerTitle}>Admin Menu</Text>
         <Text style={styles.headerSubtitle}>Manage your bus tracking system</Text>
       </View>
 
       <View style={styles.statsContainer}>
         <View style={styles.statCard}>
-          <Ionicons name="bus" size={32} color="#FF5A3C" />
+          <Ionicons name="bus" size={32} color="#f97316" />
           <Text style={styles.statNumber}>{routes.length}</Text>
           <Text style={styles.statLabel}>Routes</Text>
         </View>
@@ -138,6 +146,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#002133',
     padding: 20,
     paddingTop: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   headerTitle: {
     fontSize: 28,
@@ -218,7 +231,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: '#FF5A3C',
+    backgroundColor: '#f97316',
     borderRadius: 12,
     minWidth: 24,
     height: 24,

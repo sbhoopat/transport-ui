@@ -9,11 +9,16 @@ import {
   TextInput,
   Alert,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+import GradientButton from '../components/GradientButton';
 import { fetchDrivers, createDriver, deleteDriver } from '../store/slices/driverSlice';
 import { Driver } from '../types';
+
+const { width } = Dimensions.get('window');
+const BUTTON_WIDTH = (width - 60) / 2; // 2 buttons per row with padding
 
 const DriverManagementScreen = () => {
   const dispatch = useAppDispatch();
@@ -84,16 +89,15 @@ const DriverManagementScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Driver Management</Text>
-        <TouchableOpacity
-          style={styles.addButton}
+        <GradientButton
+          title="Add Driver"
+          icon="person-add"
           onPress={() => {
             resetForm();
             setModalVisible(true);
           }}
-        >
-          <Ionicons name="person-add" size={24} color="#fff" />
-          <Text style={styles.addButtonText}>Add Driver</Text>
-        </TouchableOpacity>
+          style={styles.addButton}
+        />
       </View>
 
       <FlatList
@@ -104,7 +108,7 @@ const DriverManagementScreen = () => {
             <View style={styles.driverHeader}>
               <View style={styles.driverInfo}>
                 <View style={styles.avatar}>
-                  <Ionicons name="person" size={32} color="#FF5A3C" />
+                  <Ionicons name="person" size={32} color="#f97316" />
                 </View>
                 <View style={styles.driverDetails}>
                   <Text style={styles.driverName}>{item.name}</Text>
@@ -145,7 +149,7 @@ const DriverManagementScreen = () => {
                 style={styles.deleteButton}
                 onPress={() => handleDelete(item.id, item.name)}
               >
-                <Ionicons name="trash" size={20} color="#FF5A3C" />
+                <Ionicons name="trash" size={20} color="#f97316" />
               </TouchableOpacity>
             </View>
           </View>
@@ -262,12 +266,12 @@ const DriverManagementScreen = () => {
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton]}
+              <GradientButton
+                title="Add Driver"
+                icon="checkmark"
                 onPress={handleSave}
-              >
-                <Text style={styles.saveButtonText}>Add Driver</Text>
-              </TouchableOpacity>
+                style={[styles.modalButton, { flex: 1 }]}
+              />
             </View>
           </ScrollView>
         </View>
@@ -282,35 +286,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: '#002133',
     padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#002133',
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FF5A3C',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    gap: 8,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    // GradientButton handles styling
   },
   driverCard: {
     backgroundColor: '#fff',
@@ -457,8 +453,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   routeOptionSelected: {
-    backgroundColor: '#FF5A3C',
-    borderColor: '#FF5A3C',
+    backgroundColor: '#f97316',
+    borderColor: '#f97316',
   },
   routeOptionText: {
     fontSize: 14,
@@ -470,28 +466,28 @@ const styles = StyleSheet.create({
   },
   modalButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
     marginTop: 20,
+    justifyContent: 'space-between',
   },
   modalButton: {
-    flex: 1,
+    // GradientButton handles styling
+    width: BUTTON_WIDTH,
+    minWidth: BUTTON_WIDTH,
+    maxWidth: BUTTON_WIDTH,
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#ddd',
+    width: BUTTON_WIDTH,
+    minWidth: BUTTON_WIDTH,
+    maxWidth: BUTTON_WIDTH,
   },
   cancelButtonText: {
-    color: '#666',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  saveButton: {
-    backgroundColor: '#FF5A3C',
-  },
-  saveButtonText: {
-    color: '#fff',
+    color: '#002133',
     fontWeight: 'bold',
     fontSize: 16,
   },

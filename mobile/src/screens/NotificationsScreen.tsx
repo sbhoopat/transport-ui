@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,16 +6,68 @@ import {
   ScrollView,
   Switch,
   TouchableOpacity,
+  FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useAppSelector } from '../store/hooks';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { fetchNotifications, markAsRead } from '../store/slices/notificationSlice';
+import { Notification } from '../types';
+import * as Notifications from 'expo-notifications';
 
 const NotificationsScreen = () => {
+  const dispatch = useAppDispatch();
+  const { token, user } = useAppSelector((state) => state.auth);
   const { subscriptions } = useAppSelector((state) => state.subscriptions);
+  const { notifications, isLoading } = useAppSelector((state) => state.notifications);
   const [busArrival, setBusArrival] = useState(true);
   const [upcomingStop, setUpcomingStop] = useState(true);
   const [routeUpdates, setRouteUpdates] = useState(true);
   const [systemAlerts, setSystemAlerts] = useState(true);
+
+  useEffect(() => {
+    if (token) {
+      dispatch(fetchNotifications(token));
+    }
+  }, [token, dispatch]);
+
+  const handleNotificationPress = (notificationId: string) => {
+    dispatch(markAsRead(notificationId));
+  };
+
+  const renderNotificationItem = ({ item }: { item: Notification }) => {
+    const typeColors = {
+      info: '#2196F3',
+      warning: '#FF9800',
+      alert: '#F44336',
+    };
+
+    const typeIcons = {
+      info: 'information-circle',
+      warning: 'warning',
+      alert: 'alert-circle',
+    };
+
+    return (
+      <TouchableOpacity
+        style={[styles.notificationCard, !item.isRead && styles.unreadCard]}
+        onPress={() => handleNotificationPress(item.id)}
+      >
+        <View style={[styles.notificationIcon, { backgroundColor: `${typeColors[item.type]}15` }]}>
+          <Ionicons name={typeIcons[item.type] as any} size={24} color={typeColors[item.type]} />
+        </View>
+        <View style={styles.notificationContent}>
+          <View style={styles.notificationHeader}>
+            <Text style={styles.notificationTitle}>{item.title}</Text>
+            {!item.isRead && <View style={styles.unreadDot} />}
+          </View>
+          <Text style={styles.notificationMessage}>{item.message}</Text>
+          <Text style={styles.notificationTime}>
+            {new Date(item.timestamp).toLocaleString()}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const notificationSettings = [
     {
@@ -23,7 +75,7 @@ const NotificationsScreen = () => {
       title: 'Bus Arrival Alerts',
       description: 'Get notified when the bus arrives at your stop',
       icon: 'bus',
-      color: '#FF5A3C',
+      color: '#f97316',
       enabled: busArrival,
       onToggle: setBusArrival,
     },
@@ -59,7 +111,7 @@ const NotificationsScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Ionicons name="notifications" size={32} color="#FF5A3C" />
+        <Ionicons name="notifications" size={32} color="#fff" />
         <Text style={styles.headerTitle}>Notifications</Text>
       </View>
 
@@ -102,21 +154,20 @@ const NotificationsScreen = () => {
       )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Recent Notifications</Text>
-        <View style={styles.notificationCard}>
-          <Ionicons name="bus" size={20} color="#FF5A3C" />
-          <View style={styles.notificationInfo}>
-            <Text style={styles.notificationTitle}>Bus approaching your stop</Text>
-            <Text style={styles.notificationTime}>2 minutes ago</Text>
+        <Text style={styles.sectionTitle}>Received Notifications</Text>
+        {notifications.length > 0 ? (
+          <FlatList
+            data={notifications}
+            renderItem={renderNotificationItem}
+            keyExtractor={(item) => item.id}
+            scrollEnabled={false}
+          />
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="notifications-off-outline" size={64} color="#ccc" />
+            <Text style={styles.emptyText}>No notifications yet</Text>
           </View>
-        </View>
-        <View style={styles.notificationCard}>
-          <Ionicons name="location" size={20} color="#4CAF50" />
-          <View style={styles.notificationInfo}>
-            <Text style={styles.notificationTitle}>Upcoming stop: Main Street</Text>
-            <Text style={styles.notificationTime}>15 minutes ago</Text>
-          </View>
-        </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -130,10 +181,14 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#002133',
     padding: 20,
-    paddingTop: 40,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   headerTitle: {
     fontSize: 24,
@@ -214,31 +269,71 @@ const styles = StyleSheet.create({
     color: '#388E3C',
   },
   notificationCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#f9f9f9',
     padding: 15,
     borderRadius: 12,
-    marginBottom: 10,
+    marginBottom: 12,
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#2196F3',
+  },
+  unreadCard: {
+    backgroundColor: '#fff',
+    borderLeftWidth: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
-  notificationInfo: {
+  notificationIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  notificationContent: {
     flex: 1,
   },
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
   notificationTitle: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: 'bold',
     color: '#002133',
-    marginBottom: 4,
+    flex: 1,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#f97316',
+  },
+  notificationMessage: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
+    lineHeight: 20,
   },
   notificationTime: {
     fontSize: 12,
     color: '#999',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 16,
   },
 });
 

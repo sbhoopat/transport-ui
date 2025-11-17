@@ -4,7 +4,7 @@
     "slug": "bustrackr",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon-school-ai-bus.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -22,7 +22,7 @@
         "NSLocationAlwaysUsageDescription": "BusTrackr needs your location for real-time tracking."
       },
       "config": {
-        "googleMapsApiKey": ""
+        "googleMapsApiKey": "DEMO_API_KEY_REPLACE_LATER"
       }
     },
     "android": {
@@ -37,7 +37,7 @@
       ],
       "config": {
         "googleMaps": {
-          "apiKey": ""
+          "apiKey": "DEMO_API_KEY_REPLACE_LATER"
         }
       }
     },
@@ -54,7 +54,7 @@
       [
         "expo-notifications",
         {
-          "color": "#FF5A3C"
+          "color": "#f97316"
         }
       ]
     ]

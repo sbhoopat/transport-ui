@@ -8,11 +8,15 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import GradientButton from '../components/GradientButton';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import SafeMapView from '../components/SafeMapView';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchRoutes } from '../store/slices/routeSlice';
 import { Route } from '../types';
+import { DEFAULT_COORDINATES, isValidCoordinate, getSafeCoordinate, getSafePolyline } from '../utils/coordinates';
+import AdminDashboardScreen from './AdminDashboardScreen';
+import BusinessManagementScreen from './BusinessManagementScreen';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -27,10 +31,43 @@ const HomeScreen = () => {
     }
   }, [token, dispatch]);
 
+  // For admin role, show admin dashboard as home screen
+  if (user?.role === 'admin') {
+    return <AdminDashboardScreen />;
+  }
+
+  // For developer role, show business management as home screen
+  if (user?.role === 'developer') {
+    return <BusinessManagementScreen />;
+  }
+
   const activeSubscription = subscriptions.find((sub) => sub.isActive);
   const activeRoute = activeSubscription
     ? routes.find((r) => r.id === activeSubscription.routeId)
     : null;
+
+  // Get safe initial region
+  const getInitialRegion = () => {
+    if (activeRoute && activeRoute.stops.length > 0) {
+      const firstStop = activeRoute.stops[0];
+      const safeCoord = getSafeCoordinate(
+        { latitude: firstStop.latitude, longitude: firstStop.longitude },
+        DEFAULT_COORDINATES
+      );
+      return {
+        latitude: safeCoord.latitude,
+        longitude: safeCoord.longitude,
+        latitudeDelta: 0.1,
+        longitudeDelta: 0.1,
+      };
+    }
+    return {
+      latitude: DEFAULT_COORDINATES.latitude,
+      longitude: DEFAULT_COORDINATES.longitude,
+      latitudeDelta: 0.1,
+      longitudeDelta: 0.1,
+    };
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -39,36 +76,143 @@ const HomeScreen = () => {
           <View style={styles.mapContainer}>
             <SafeMapView
               style={styles.map}
-              initialRegion={{
-                latitude: activeRoute.stops[0]?.latitude || 37.78825,
-                longitude: activeRoute.stops[0]?.longitude || -122.4324,
-                latitudeDelta: 0.1,
-                longitudeDelta: 0.1,
-              }}
+              initialRegion={getInitialRegion()}
             >
-              {activeRoute.stops.map((stop) => (
-                <Marker
-                  key={stop.id}
-                  coordinate={{
-                    latitude: stop.latitude,
-                    longitude: stop.longitude,
-                  }}
-                  title={stop.name}
-                />
-              ))}
-              {activeRoute.polyline && (
-                <Polyline
-                  coordinates={activeRoute.polyline}
-                  strokeColor="#FF5A3C"
-                  strokeWidth={3}
-                />
-              )}
+              {activeRoute.stops && Array.isArray(activeRoute.stops) && activeRoute.stops.length > 0
+                ? activeRoute.stops
+                    .filter((stop) => stop && stop.id)
+                    .map((stop, index) => {
+                      // Hardcode coordinates - use default if invalid
+                      let lat = DEFAULT_COORDINATES.latitude;
+                      let lng = DEFAULT_COORDINATES.longitude;
+                      
+                      if (stop && typeof stop.latitude === 'number' && !isNaN(stop.latitude) && isFinite(stop.latitude)) {
+                        lat = stop.latitude;
+                      }
+                      if (stop && typeof stop.longitude === 'number' && !isNaN(stop.longitude) && isFinite(stop.longitude)) {
+                        lng = stop.longitude;
+                      }
+                      
+                      // Add slight offset for multiple stops at same location
+                      const offset = index * 0.001;
+                      
+                      // Ensure final values are valid numbers
+                      const finalLat = typeof lat === 'number' && !isNaN(lat) && isFinite(lat) 
+                        ? lat + offset 
+                        : DEFAULT_COORDINATES.latitude;
+                      const finalLng = typeof lng === 'number' && !isNaN(lng) && isFinite(lng) 
+                        ? lng + offset 
+                        : DEFAULT_COORDINATES.longitude;
+                      
+                      // Always return a valid coordinate object
+                      const markerCoordinate = {
+                        latitude: finalLat,
+                        longitude: finalLng,
+                      };
+                      
+                      return (
+                        <Marker
+                          key={stop.id || `stop-${index}`}
+                          coordinate={markerCoordinate}
+                          title={stop.name || 'Stop'}
+                        />
+                      );
+                    })
+                : null}
+              {(() => {
+                // Hardcode polyline coordinates - use stops or default
+                let polylineCoords: Array<{ latitude: number; longitude: number }> = [];
+                
+                if (activeRoute && activeRoute.polyline && Array.isArray(activeRoute.polyline) && activeRoute.polyline.length > 0) {
+                  // Use polyline if valid
+                  polylineCoords = activeRoute.polyline
+                    .filter((coord) => coord !== null && coord !== undefined)
+                    .map((coord) => {
+                      const lat = (coord && typeof coord === 'object' && typeof coord.latitude === 'number' && !isNaN(coord.latitude) && isFinite(coord.latitude))
+                        ? coord.latitude
+                        : DEFAULT_COORDINATES.latitude;
+                      const lng = (coord && typeof coord === 'object' && typeof coord.longitude === 'number' && !isNaN(coord.longitude) && isFinite(coord.longitude))
+                        ? coord.longitude
+                        : DEFAULT_COORDINATES.longitude;
+                      // Always return a fresh object
+                      return { 
+                        latitude: Number(lat), 
+                        longitude: Number(lng) 
+                      };
+                    })
+                    .filter((coord) => 
+                      typeof coord.latitude === 'number' && 
+                      typeof coord.longitude === 'number' &&
+                      !isNaN(coord.latitude) && 
+                      !isNaN(coord.longitude) &&
+                      isFinite(coord.latitude) &&
+                      isFinite(coord.longitude)
+                    );
+                } else if (activeRoute && activeRoute.stops && Array.isArray(activeRoute.stops) && activeRoute.stops.length > 0) {
+                  // Fallback to stops
+                  polylineCoords = activeRoute.stops
+                    .filter((stop) => stop !== null && stop !== undefined)
+                    .map((stop) => {
+                      const lat = (stop && typeof stop === 'object' && typeof stop.latitude === 'number' && !isNaN(stop.latitude) && isFinite(stop.latitude))
+                        ? stop.latitude
+                        : DEFAULT_COORDINATES.latitude;
+                      const lng = (stop && typeof stop === 'object' && typeof stop.longitude === 'number' && !isNaN(stop.longitude) && isFinite(stop.longitude))
+                        ? stop.longitude
+                        : DEFAULT_COORDINATES.longitude;
+                      // Always return a fresh object
+                      return { 
+                        latitude: Number(lat), 
+                        longitude: Number(lng) 
+                      };
+                    })
+                    .filter((coord) => 
+                      typeof coord.latitude === 'number' && 
+                      typeof coord.longitude === 'number' &&
+                      !isNaN(coord.latitude) && 
+                      !isNaN(coord.longitude) &&
+                      isFinite(coord.latitude) &&
+                      isFinite(coord.longitude)
+                    );
+                }
+                
+                // Ensure we have at least one valid coordinate
+                if (polylineCoords.length === 0) {
+                  polylineCoords = [{ 
+                    latitude: DEFAULT_COORDINATES.latitude, 
+                    longitude: DEFAULT_COORDINATES.longitude 
+                  }];
+                }
+                
+                // Final validation - ensure all coordinates are valid objects
+                const validCoords = polylineCoords.filter((coord) => 
+                  coord && 
+                  typeof coord === 'object' &&
+                  typeof coord.latitude === 'number' && 
+                  typeof coord.longitude === 'number' &&
+                  !isNaN(coord.latitude) && 
+                  !isNaN(coord.longitude) &&
+                  isFinite(coord.latitude) &&
+                  isFinite(coord.longitude)
+                );
+                
+                if (validCoords.length === 0) {
+                  return null;
+                }
+                
+                return (
+                  <Polyline
+                    coordinates={validCoords}
+                    strokeColor="#f97316"
+                    strokeWidth={3}
+                  />
+                );
+              })()}
             </SafeMapView>
           </View>
 
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <Ionicons name="bus" size={24} color="#FF5A3C" />
+              <Ionicons name="bus" size={24} color="#f97316" />
               <Text style={styles.cardTitle}>Active Route</Text>
             </View>
             <Text style={styles.routeName}>{activeRoute.name}</Text>
@@ -85,15 +229,15 @@ const HomeScreen = () => {
                 <Text style={styles.statText}>${activeRoute.price.toFixed(2)}</Text>
               </View>
             </View>
-            <TouchableOpacity
-              style={styles.trackButton}
+            <GradientButton
+              title="Track Bus Live"
+              icon="location"
               onPress={() =>
+                // @ts-ignore
                 navigation.navigate('LiveTracking', { routeId: activeRoute.id })
               }
-            >
-              <Ionicons name="location" size={20} color="#fff" />
-              <Text style={styles.trackButtonText}>Track Bus Live</Text>
-            </TouchableOpacity>
+              style={styles.trackButton}
+            />
           </View>
         </>
       ) : (
@@ -103,13 +247,15 @@ const HomeScreen = () => {
           <Text style={styles.emptySubtext}>
             Subscribe to a route to start tracking your bus
           </Text>
-          <TouchableOpacity
+          <GradientButton
+            title="Browse Routes"
+            icon="search"
+            onPress={() => {
+              // @ts-ignore
+              navigation.navigate('Routes');
+            }}
             style={styles.subscribeButton}
-            onPress={() => navigation.navigate('Routes')}
-          >
-            <Ionicons name="search" size={20} color="#fff" />
-            <Text style={styles.subscribeButtonText}>Browse Routes</Text>
-          </TouchableOpacity>
+          />
         </View>
       )}
     </ScrollView>
@@ -179,18 +325,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   trackButton: {
-    backgroundColor: '#FF5A3C',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  trackButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    // GradientButton handles styling
   },
   emptyContainer: {
     flex: 1,
@@ -212,18 +347,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   subscribeButton: {
-    backgroundColor: '#FF5A3C',
-    padding: 15,
-    borderRadius: 8,
-    paddingHorizontal: 30,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    // GradientButton handles styling
   },
-  subscribeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  trackButton: {
+    // GradientButton handles styling
   },
 });
 

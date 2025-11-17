@@ -1,57 +1,116 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import MapView, { MapViewProps } from 'react-native-maps';
+import { Platform, View, Text, StyleSheet } from 'react-native';
+import MapView, { MapViewProps, Region } from 'react-native-maps';
+import { DEFAULT_COORDINATES } from '../utils/coordinates';
 
 interface SafeMapViewProps extends MapViewProps {
-  fallbackMessage?: string;
+  children?: React.ReactNode;
 }
 
 /**
- * Safe MapView component that handles missing API key gracefully
+ * Default region for map initialization
+ */
+const DEFAULT_REGION: Region = {
+  latitude: DEFAULT_COORDINATES.latitude,
+  longitude: DEFAULT_COORDINATES.longitude,
+  latitudeDelta: 0.1,
+  longitudeDelta: 0.1,
+};
+
+/**
+ * Safe MapView component using Google Maps
+ * 
+ * Features:
+ * - Google Maps integration
+ * - Supports polylines, markers, and all MapView features
+ * - Works with Expo and React Native
+ * - Always has valid initialRegion to prevent crashes
+ * - Requires Google Maps API key (set in app.json/app.config.js)
  */
 const SafeMapView: React.FC<SafeMapViewProps> = ({
-  fallbackMessage = 'Map unavailable - Google Maps API key not configured',
+  children,
+  initialRegion,
+  region,
   ...props
 }) => {
-  const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  // Ensure we always have a valid region
+  const safeInitialRegion: Region = initialRegion || region || DEFAULT_REGION;
+  
+  // Validate region coordinates
+  const validatedRegion: Region = {
+    latitude: typeof safeInitialRegion.latitude === 'number' && 
+              !isNaN(safeInitialRegion.latitude) && 
+              isFinite(safeInitialRegion.latitude)
+      ? safeInitialRegion.latitude
+      : DEFAULT_REGION.latitude,
+    longitude: typeof safeInitialRegion.longitude === 'number' && 
+                !isNaN(safeInitialRegion.longitude) && 
+                isFinite(safeInitialRegion.longitude)
+      ? safeInitialRegion.longitude
+      : DEFAULT_REGION.longitude,
+    latitudeDelta: typeof safeInitialRegion.latitudeDelta === 'number' && 
+                   !isNaN(safeInitialRegion.latitudeDelta) && 
+                   isFinite(safeInitialRegion.latitudeDelta) &&
+                   safeInitialRegion.latitudeDelta > 0
+      ? safeInitialRegion.latitudeDelta
+      : DEFAULT_REGION.latitudeDelta,
+    longitudeDelta: typeof safeInitialRegion.longitudeDelta === 'number' && 
+                    !isNaN(safeInitialRegion.longitudeDelta) && 
+                    isFinite(safeInitialRegion.longitudeDelta) &&
+                    safeInitialRegion.longitudeDelta > 0
+      ? safeInitialRegion.longitudeDelta
+      : DEFAULT_REGION.longitudeDelta,
+  };
 
-  if (!apiKey) {
+  try {
     return (
-      <View style={[styles.container, props.style]}>
-        <View style={styles.fallbackContainer}>
-          <Text style={styles.fallbackText}>{fallbackMessage}</Text>
-          <Text style={styles.fallbackHint}>
-            Add EXPO_PUBLIC_GOOGLE_MAPS_API_KEY to .env file
-          </Text>
-        </View>
+      <MapView
+        {...props}
+        provider={Platform.OS === 'ios' ? undefined : undefined} // Use default provider (Google Maps when API key is set)
+        initialRegion={validatedRegion}
+        region={region ? validatedRegion : undefined}
+        mapType="standard"
+        loadingEnabled={true}
+        loadingIndicatorColor="#f97316"
+        showsUserLocation={props.showsUserLocation || false}
+        showsMyLocationButton={props.showsMyLocationButton || false}
+        showsCompass={props.showsCompass || false}
+        showsScale={props.showsScale || false}
+        zoomEnabled={props.zoomEnabled !== false}
+        scrollEnabled={props.scrollEnabled !== false}
+        pitchEnabled={props.pitchEnabled !== false}
+        rotateEnabled={props.rotateEnabled !== false}
+      >
+        {children}
+      </MapView>
+    );
+  } catch (error) {
+    // Fallback UI if map fails to render
+    console.error('MapView rendering error:', error);
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Map unavailable</Text>
+        <Text style={styles.errorSubtext}>Please check your connection</Text>
       </View>
     );
   }
-
-  return <MapView {...props} />;
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  fallbackContainer: {
+  errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    backgroundColor: '#f5f5f5',
   },
-  fallbackText: {
+  errorText: {
     fontSize: 16,
     color: '#666',
-    textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  fallbackHint: {
-    fontSize: 12,
+  errorSubtext: {
+    fontSize: 14,
     color: '#999',
-    textAlign: 'center',
   },
 });
 

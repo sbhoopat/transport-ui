@@ -1,4 +1,4 @@
-import { User, Route, Stop, Subscription, Expense, Bus, Driver } from '../types';
+import { User, Route, Stop, Subscription, Expense, Bus, Driver, BusinessType, Notification } from '../types';
 
 // Mock data
 const mockUser: User = {
@@ -14,6 +14,34 @@ const mockAdminUser: User = {
   name: 'Admin User',
   role: 'admin',
 };
+
+const mockDeveloperUser: User = {
+  id: 'dev-1',
+  email: 'developer@example.com',
+  name: 'Developer User',
+  role: 'developer',
+};
+
+const mockBusinesses: BusinessType[] = [
+  {
+    id: 'business-1',
+    name: 'Greenwood School',
+    type: 'school',
+    role: 'Educational Institution',
+    startDate: '2024-01-15',
+    createdAt: new Date('2024-01-15').toISOString(),
+    updatedAt: new Date('2024-01-15').toISOString(),
+  },
+  {
+    id: 'business-2',
+    name: 'City Infrastructure Corp',
+    type: 'infra',
+    role: 'Infrastructure Management',
+    startDate: '2024-02-20',
+    createdAt: new Date('2024-02-20').toISOString(),
+    updatedAt: new Date('2024-02-20').toISOString(),
+  },
+];
 
 const mockStops: Stop[] = [
   {
@@ -143,6 +171,14 @@ class MockApiService {
       };
     }
     
+    if (email === 'developer@example.com') {
+      this.currentUser = mockDeveloperUser;
+      return {
+        token: 'mock-jwt-token-developer',
+        user: mockDeveloperUser,
+      };
+    }
+    
     this.currentUser = mockUser;
     return {
       token: 'mock-jwt-token',
@@ -201,7 +237,8 @@ class MockApiService {
   async addExpense(
     category: string,
     amount: number,
-    description: string
+    description: string,
+    date?: string
   ): Promise<Expense> {
     await delay(500);
     
@@ -210,7 +247,7 @@ class MockApiService {
       category,
       amount,
       description,
-      date: new Date().toISOString(),
+      date: date || new Date().toISOString(),
     };
     
     mockExpenses.unshift(expense);
@@ -305,6 +342,93 @@ class MockApiService {
     if (routeIndex !== -1) {
       mockRoutes.splice(routeIndex, 1);
     }
+  }
+
+  // Business management methods (for developer role)
+  async getBusinesses(): Promise<BusinessType[]> {
+    await delay(500);
+    return mockBusinesses;
+  }
+
+  async createBusiness(business: Omit<BusinessType, 'id' | 'createdAt' | 'updatedAt'>): Promise<BusinessType> {
+    await delay(500);
+    const newBusiness: BusinessType = {
+      id: `business-${Date.now()}`,
+      ...business,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    mockBusinesses.push(newBusiness);
+    return newBusiness;
+  }
+
+  async updateBusiness(businessId: string, updates: Partial<BusinessType>): Promise<BusinessType> {
+    await delay(500);
+    const businessIndex = mockBusinesses.findIndex((b) => b.id === businessId);
+    if (businessIndex === -1) {
+      throw new Error('Business not found');
+    }
+    mockBusinesses[businessIndex] = {
+      ...mockBusinesses[businessIndex],
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    return mockBusinesses[businessIndex];
+  }
+
+  async deleteBusiness(businessId: string): Promise<void> {
+    await delay(500);
+    const businessIndex = mockBusinesses.findIndex((b) => b.id === businessId);
+    if (businessIndex !== -1) {
+      mockBusinesses.splice(businessIndex, 1);
+    }
+  }
+
+  // Notification methods
+  async sendNotification(
+    title: string,
+    message: string,
+    type: 'info' | 'warning' | 'alert' = 'info'
+  ): Promise<Notification> {
+    await delay(500);
+    
+    const notification: Notification = {
+      id: `notif-${Date.now()}`,
+      title,
+      message,
+      type,
+      timestamp: new Date().toISOString(),
+      isRead: false,
+    };
+    
+    // In a real app, this would be sent to all users via push notifications
+    // For now, we'll just return the notification
+    console.log('Notification sent to all users:', notification);
+    
+    return notification;
+  }
+
+  async getNotifications(): Promise<Notification[]> {
+    await delay(500);
+    // Return mock notifications for the current user
+    return [
+      {
+        id: 'notif-1',
+        title: 'Welcome to BusTrackr',
+        message: 'Thank you for using BusTrackr. Track your bus in real-time!',
+        type: 'info',
+        timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+        isRead: false,
+      },
+      {
+        id: 'notif-2',
+        title: 'Route Update',
+        message: 'Route 1 schedule has been updated. Please check the new timings.',
+        type: 'warning',
+        timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+        isRead: false,
+      },
+    ];
   }
 }
 

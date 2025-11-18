@@ -223,77 +223,111 @@ const BusinessManagementScreen = () => {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <ScrollView contentContainerStyle={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {isEditing ? 'Edit Business' : 'Add New Business'}
-            </Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Business Name"
-              value={name}
-              onChangeText={setName}
-            />
-
-            <Text style={styles.label}>Business Type</Text>
-            <View style={styles.typeButtons}>
-              {(['school', 'infra', 'corporate', 'other'] as const).map((t) => (
-                <TouchableOpacity
-                  key={t}
-                  style={[
-                    styles.typeButton,
-                    type === t && { backgroundColor: getTypeColor(t), borderColor: getTypeColor(t) },
-                  ]}
-                  onPress={() => setType(t)}
-                >
-                  <Ionicons
-                    name={getTypeIcon(t) as any}
-                    size={20}
-                    color={type === t ? '#fff' : getTypeColor(t)}
-                  />
-                  <Text
-                    style={[
-                      styles.typeButtonText,
-                      type === t && styles.typeButtonTextActive,
-                    ]}
-                  >
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+          <View style={styles.modalContent}>
+            <ScrollView 
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={true}
+              keyboardShouldPersistTaps="handled"
+              bounces={true}
+            >
+            <View style={styles.modalHeader}>
+              <Ionicons 
+                name={isEditing ? "create-outline" : "add-circle-outline"} 
+                size={28} 
+                color="#002133" 
+                style={styles.modalHeaderIcon}
+              />
+              <Text style={styles.modalTitle}>
+                {isEditing ? 'Edit Business' : 'Add New Business'}
+              </Text>
             </View>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Role/Description"
-              value={role}
-              onChangeText={setRole}
-            />
-
-            <DatePicker
-              value={startDate ? new Date(startDate) : null}
-              onChange={(date) => setStartDate(date.toISOString().split('T')[0])}
-              placeholder="Select Start Date"
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => {
-                  setModalVisible(false);
-                  resetForm();
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <GradientButton
-                title="Save Business"
-                icon="checkmark"
-                onPress={handleAddOrUpdateBusiness}
-                style={[styles.modalButton, { flex: 1 }]}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Business Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter business name"
+                placeholderTextColor="#999"
+                value={name}
+                onChangeText={setName}
               />
             </View>
-          </ScrollView>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Business Type</Text>
+              <View style={styles.typeButtons}>
+                {(['school', 'infra', 'corporate', 'other'] as const).map((t) => (
+                  <TouchableOpacity
+                    key={t}
+                    style={[
+                      styles.typeButton,
+                      type === t && { backgroundColor: getTypeColor(t), borderColor: getTypeColor(t) },
+                    ]}
+                    onPress={() => setType(t)}
+                  >
+                    <Ionicons
+                      name={getTypeIcon(t) as any}
+                      size={20}
+                      color={type === t ? '#fff' : getTypeColor(t)}
+                    />
+                    <Text
+                      style={[
+                        styles.typeButtonText,
+                        type === t && styles.typeButtonTextActive,
+                      ]}
+                    >
+                      {t.charAt(0).toUpperCase() + t.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Role/Description</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Enter role or description"
+                placeholderTextColor="#999"
+                value={role}
+                onChangeText={setRole}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Start Date</Text>
+              <DatePicker
+                value={startDate ? new Date(startDate) : null}
+                onChange={(date) => setStartDate(date.toISOString().split('T')[0])}
+                placeholder="Select Start Date"
+              />
+            </View>
+            </ScrollView>
+            
+            <View style={styles.modalFooter}>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setModalVisible(false);
+                    resetForm();
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.saveButtonContainer}>
+                <GradientButton
+                  title="Save Business"
+                  icon="checkmark"
+                  onPress={handleAddOrUpdateBusiness}
+                  style={styles.saveButtonFullWidth}
+                />
+              </View>
+            </View>
+          </View>
         </View>
       </Modal>
     </View>
@@ -425,88 +459,139 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
+    borderRadius: 16,
     width: '90%',
-    maxHeight: '80%',
+    maxHeight: '85%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  scrollContent: {
+    padding: 24,
+    paddingBottom: 16,
+  },
+  modalFooter: {
+    padding: 24,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    backgroundColor: '#fff',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 2,
+    borderBottomColor: '#f0f0f0',
+    gap: 10,
+  },
+  modalHeaderIcon: {
+    marginRight: 4,
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#002133',
-    marginBottom: 20,
     textAlign: 'center',
   },
+  inputContainer: {
+    marginBottom: 8,
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+    paddingTop: 16,
+  },
   input: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
     fontSize: 16,
+    backgroundColor: '#fafafa',
+    color: '#002133',
   },
   label: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#002133',
-    marginBottom: 10,
+    marginBottom: 12,
+    marginTop: 4,
   },
   typeButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 15,
+    gap: 12,
+    marginBottom: 20,
     justifyContent: 'space-between',
   },
   typeButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#e0e0e0',
     backgroundColor: '#f9f9f9',
     width: BUTTON_WIDTH,
     minWidth: BUTTON_WIDTH,
     maxWidth: BUTTON_WIDTH,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   typeButtonText: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#666',
     fontWeight: '600',
   },
   typeButtonTextActive: {
     color: '#fff',
+    fontWeight: 'bold',
   },
   modalButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-    marginTop: 20,
+    marginTop: 8,
     justifyContent: 'space-between',
-  },
-  modalButton: {
-    // GradientButton handles styling
-    width: BUTTON_WIDTH,
-    minWidth: BUTTON_WIDTH,
-    maxWidth: BUTTON_WIDTH,
   },
   cancelButton: {
     backgroundColor: '#f0f0f0',
     padding: 14,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
     width: BUTTON_WIDTH,
     minWidth: BUTTON_WIDTH,
     maxWidth: BUTTON_WIDTH,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   cancelButtonText: {
     color: '#002133',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  saveButtonContainer: {
+    marginTop: 12,
+    width: '100%',
+  },
+  saveButtonFullWidth: {
+    width: '100%',
   },
 });
 

@@ -25,7 +25,7 @@ const GradientButton: React.FC<GradientButtonProps> = ({
   variant = 'primary',
 }) => {
   const colors = variant === 'primary' 
-    ? ['#f97316', '#fb923c', '#fdba74'] // Orange gradient
+    ? ['#dc2626', '#ea580c', '#f97316', '#fb923c'] // Red to orange gradient
     : ['#002133', '#003d5c', '#005985']; // Dark blue gradient
 
   return (

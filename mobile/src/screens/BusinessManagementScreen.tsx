@@ -267,7 +267,7 @@ const BusinessManagementScreen = () => {
                   >
                     <Ionicons
                       name={getTypeIcon(t) as any}
-                      size={20}
+                      size={16}
                       color={type === t ? '#fff' : getTypeColor(t)}
                     />
                     <Text
@@ -307,7 +307,7 @@ const BusinessManagementScreen = () => {
             </ScrollView>
             
             <View style={styles.modalFooter}>
-              <View style={styles.modalButtons}>
+              <View style={styles.saveButtonContainer}>
                 <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => {
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
   typeButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
     marginBottom: 20,
     justifyContent: 'space-between',
   },
@@ -535,10 +535,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: '#e0e0e0',
     backgroundColor: '#f9f9f9',
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   typeButtonText: {
-    fontSize: 15,
+    fontSize: 13,
     color: '#666',
     fontWeight: '600',
   },
@@ -560,21 +560,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  modalButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 8,
-    justifyContent: 'space-between',
-  },
   cancelButton: {
     backgroundColor: '#f0f0f0',
     padding: 14,
     borderRadius: 12,
     alignItems: 'center',
-    width: BUTTON_WIDTH,
-    minWidth: BUTTON_WIDTH,
-    maxWidth: BUTTON_WIDTH,
+    width: '100%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
